@@ -1,0 +1,25 @@
+name: build
+on: workflow_dispatch
+jobs:
+  b:
+    runs-on: ubuntu-22.04
+    steps:
+      - run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+      - uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r25c
+      - run: git clone https://github.com/LuaJIT/LuaJIT.git -b v2.1 lj
+      - working-directory: lj
+        run: |
+          T=${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin
+          make amalg HOST_CC="gcc -m32" CROSS=$T/armv7a-linux-androideabi21- \
+            STATIC_CC=$T/armv7a-linux-androideabi21-clang \
+            DYNAMIC_CC="$T/armv7a-linux-androideabi21-clang -fPIC" \
+            TARGET_LD=$T/armv7a-linux-androideabi21-clang \
+            TARGET_AR="$T/llvm-ar rcus" TARGET_STRIP=$T/llvm-strip \
+            TARGET_SYS=Linux BUILDMODE=static XCFLAGS=-DLUAJIT_ENABLE_LUA52COMPAT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: luajit32
+          path: lj/src/luajit
