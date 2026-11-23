@@ -1,5 +1,5 @@
 name: build
-on: workflow_dispatch
+on: [push, workflow_dispatch]
 jobs:
   b:
     runs-on: ubuntu-22.04
